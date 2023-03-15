@@ -74,4 +74,9 @@ class UserTestController extends Controller
     {
         return UserTest::where('name', 'like', '%' . $name . '%')->get();
     }
+    
+    public function test($name)
+    {
+        return UserTest::where('name', 'like', '%' . $name . '%')->get();
+    }
 }
