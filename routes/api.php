@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum', 'verified')->get('/user', function (Request $r
     return $request->user();
 });
 
+//
 Route::get('/test', function () {
     return view('test');
 });
