@@ -1,9 +1,8 @@
 <?php
 
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Auth\AuthWithGoogleController;
-use App\Http\Controllers\Auth\EmailVerificationController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\User\Auth\AuthController;
+use App\Http\Controllers\User\Auth\EmailVerificationController;
+use App\Http\Controllers\User\Auth\ForgotPasswordController;
 use App\Http\Controllers\UserTestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -24,10 +23,12 @@ Route::middleware('auth:sanctum', 'verified')->get('/user', function (Request $r
 });
 
 
+Route::get('/test/testlaravel', function () {
+    return view('test');
+});
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/login/sign-google', [AuthWithGoogleController::class, 'handleProviderCallback']);
 Route::get('/users', [UserTestController::class, 'index']);
 Route::get('/users/{id}', [UserTestController::class, 'show']);
 Route::get('/users/search/{name}', [UserTestController::class, 'search']);
