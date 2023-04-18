@@ -11,8 +11,6 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-
-
     public function register(Request $request)
     {
         $fields = $request->validate([
@@ -22,16 +20,8 @@ class AuthController extends Controller
             'email' => 'required|string|email|unique:users',
             'phone_number' => 'required|string',
             'gender' => 'required|string',
-            'image' => 'required|file',
             'password' => 'required|string'
         ]);
-        // Get the uploaded image
-        $image = $request->file('image');
-        // Generate a unique file name
-        $name = time() + rand(1, 1000000) . '.' . $image->getClientOriginalName();
-        // Store the uploaded image in the public disk
-        $path = $image->storeAs('public/images', $name);
-
 
         $user = User::create([
             'first_name' => $fields['first_name'],
@@ -40,13 +30,13 @@ class AuthController extends Controller
             'email' => $fields['email'],
             'phone_number' => $fields['phone_number'],
             'gender' => $fields['gender'],
-            'image' => $name,
+            'image' => null,
             'password' => bcrypt($fields['password']),
         ]);
 
         if (!$user) {
             $response = [
-                'status' => 'error',
+                'status' => false,
                 'data' => null,
                 'message' => 'Registration failed'
             ];
@@ -56,7 +46,7 @@ class AuthController extends Controller
         $token = $user->createToken('myapptoken')->plainTextToken;
 
         $response = [
-            'status' => 'success',
+            'status' => true,
             'data' => [
                 'user' => $user,
                 'token' => $token
@@ -65,6 +55,42 @@ class AuthController extends Controller
         ];
 
         return response($response, 201);
+    }
+
+
+    public function uploadImage(Request $request)
+    {
+        $fields = $request->validate([
+            'user_id' => 'required|integer',
+            'image' => 'required|image|max:2048', // max file size of 2MB
+        ]);
+
+        $user = User::find($fields['user_id']);
+        if (!$user) {
+            $response = [
+                'status' => false,
+                'data' => null,
+                'message' => 'User not found'
+            ];
+            return response()->json($response, 404);
+        }
+
+        $image = $request->file('image');
+        $name = time() . '_' . $image->getClientOriginalName();
+        $path = $image->storeAs('public/images', $name);
+
+        $user->image = $name;
+        $user->save();
+
+        $response = [
+            'status' => true,
+            'data' => [
+                'image_url' => asset('storage/images/' . $name)
+            ],
+            'message' => 'Image uploaded successfully'
+        ];
+
+        return response()->json($response, 200);
     }
 
     public function login(Request $request)
@@ -80,7 +106,7 @@ class AuthController extends Controller
         // Check password
         if (!$user || !Hash::check($fields['password'], $user->password)) {
             return response([
-                'status' => 'error',
+                'status' => false,
                 'data' => null,
                 'message' => 'Invalid email or password'
             ], 401);
@@ -89,7 +115,7 @@ class AuthController extends Controller
         $token = $user->createToken('myapptoken')->plainTextToken;
 
         $response = [
-            'status' => 'success',
+            'status' => true,
             'data' => [
                 'user' => $user,
                 'token' => $token
@@ -108,7 +134,7 @@ class AuthController extends Controller
         } catch (Exception $e) {
             $response =
                 [
-                    'status' => 'error',
+                    'status' => false,
                     'data' => null,
                     'message' => 'Logout failed: ' . $e->getMessage()
                 ];
@@ -117,7 +143,7 @@ class AuthController extends Controller
 
         $response =
             [
-                'status' => 'success',
+                'status' => true,
                 'data' => null,
                 'message' => 'Logged out'
             ];

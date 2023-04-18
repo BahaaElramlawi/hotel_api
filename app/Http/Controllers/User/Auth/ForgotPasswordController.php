@@ -11,8 +11,6 @@ use Illuminate\Validation\Rules\Password as RulesPassword;
 
 class ForgotPasswordController extends Controller
 {
-
-
     public function forgotPassword(Request $request)
     {
         $request->validate([
@@ -25,18 +23,19 @@ class ForgotPasswordController extends Controller
 
         if ($status == Password::RESET_LINK_SENT) {
             return response([
-                'status' => 'success',
+                'status' => true,
                 'data' => null,
                 'message' => __('A reset link has been sent to your email address.')
             ], 200);
         }
 
         return response([
-            'status' => 'error',
+            'status' => false,
             'data' => null,
             'message' => __('Unable to send reset link'),
         ], 500);
     }
+
 
     public function reset(Request $request)
     {
@@ -61,19 +60,17 @@ class ForgotPasswordController extends Controller
 
         if ($status == Password::PASSWORD_RESET) {
             return response([
-                'status' => 'success',
+                'status' => true,
                 'data' => null,
                 'message' => 'Password reset successfully'
             ]);
         }
 
         return response([
-            'status' => 'error',
+            'status' => false,
             'data' => null,
             'message' => __($status)
         ], 500);
 
     }
-
-
 }

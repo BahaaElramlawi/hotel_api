@@ -17,7 +17,7 @@ class EmailVerificationController extends Controller
             $user = Auth::user();
             if ($user->hasVerifiedEmail()) {
                 $response = [
-                    'status' => 'error',
+                    'status' => false,
                     'data' => null,
                     'message' => 'Email already verified'
                 ];
@@ -28,7 +28,7 @@ class EmailVerificationController extends Controller
 
                 $user->sendEmailVerificationNotification();
                 $response = [
-                    'status' => 'success',
+                    'status' => true,
                     'data' => null,
                     'message' => 'Verification email sent'
                 ];
@@ -36,7 +36,7 @@ class EmailVerificationController extends Controller
             }
         } catch (\Exception $e) {
             $response = [
-                'status' => 'error',
+                'status' => false,
                 'data' => null,
                 'message' => 'Failed to send verification email: ' . $e->getMessage()
             ];
@@ -50,7 +50,7 @@ class EmailVerificationController extends Controller
         $user = Auth::user();
         if ($user->hasVerifiedEmail()) {
             return response([
-                'status' => 'error',
+                'status' => false,
                 'data' => null,
                 'message' => 'Email already verified'
             ], 400);
@@ -62,14 +62,14 @@ class EmailVerificationController extends Controller
 
             event(new Verified($user));
             return response([
-                'status' => 'success',
+                'status' => true,
                 'data' => null,
                 'message' => 'Email has been verified'
             ], 200);
         }
 
         return response([
-            'status' => 'error',
+            'status' => false,
             'data' => null,
             'message' => 'Failed to verify email'
         ], 500);
