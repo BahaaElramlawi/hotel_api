@@ -3,156 +3,61 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\HotelTagRequest;
+use App\Models\Hotel;
 use App\Models\HotelTag;
+use App\Services\Admin\HotelTagService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class HotelTagController extends Controller
 {
+    protected $hotelService;
+
+    public function __construct(HotelTagService $hotelTagService)
+    {
+        $this->hotelService = $hotelTagService;
+    }
 
     public function index(Request $request)
     {
-        try {
-            $perPage = $request->input('per_page', 10);
-            $hotels = Hotel::with(['images', 'locations', 'tags', 'facilities'])
-                ->paginate($perPage);
+        $perPage = $request->input('per_page', 10);
+        $hotels = $this->hotelService->getAllHotels($perPage);
 
-            $hotelData = [];
-            foreach ($hotels as $hotel) {
-                $images = $hotel->images()->pluck('image_url')->toArray();
-                $location = $hotel->location_id;
-                $tags = $hotel->tags()->pluck('name')->toArray();
-                $facilities = $hotel->facilities()->pluck('name')->toArray();
-
-                $hotelData[] = [
-                    'id' => $hotel->id,
-                    'host_id' => $hotel->host_id,
-                    'name' => $hotel->name,
-                    'price' => $hotel->price,
-                    'rate' => $hotel->rate,
-                    'description' => $hotel->description,
-                    'locations' => $location,
-                    'images' => $images,
-                    'tags' => $tags,
-                    'facilities' => $facilities,
-                ];
-            }
-
-            return response()->json([
-                'status' => true,
-                'data' => [
-                    'hotels' => $hotelData,
-                    'pagination' => [
-                        'current_page' => $hotels->currentPage(),
-                        'last_page' => $hotels->lastPage(),
-                        'per_page' => $hotels->perPage(),
-                        'total' => $hotels->total(),
-                    ],
-                ],
-                'message' => 'Hotels retrieved successfully'
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'message' => 'Failed to retrieve hotels: ' . $e->getMessage(),
-            ], 500);
-        }
+        return response()->json($hotels);
     }
-
 
     public function show($id)
     {
-        try {
-            $tag = HotelTag::findOrFail($id);
+        $hotelService = new HotelTagService();
+        $result = $hotelService->getHotelTagByID($id);
 
-            return response()->json([
-                'status' => true,
-                'data' => [
-                    'tag' => $tag
-                ],
-                'message' => 'Tag retrieved successfully'
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'message' => 'Failed to retrieve tag: ' . $e->getMessage()
-            ], 404);
-        }
+        return response()->json($result, $result['status'] ? 200 : 404);
     }
 
-
-    public function store(Request $request)
+    public function store(HotelTagRequest $request, HotelTagService $service)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required',
-        ]);
+        $data = $request->validated();
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'message' => $validator->errors()->first()
-            ], 400);
-        }
+        $response = $service->addHotelTag($data);
 
-        $tag = new HotelTag();
-        $tag->name = $request->input('name');
-        $tag->save();
+        return response()->json($response, $response['status'] ? 201 : 500);
 
-        return response()->json([
-            'status' => true,
-            'data' => [
-                'tag' => $tag
-            ],
-            'message' => 'Tag created successfully'
-        ], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(HotelTagRequest $request, $id)
     {
-        $tag = HotelTag::find($id);
+        $response = $this->hotelService->updateHotelTag($request, $id);
 
-        if (!$tag) {
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'message' => 'Tag not found'
-            ], 404);
-        }
+        $status = $response['status'] ? 200 : 404;
 
-        $tag->name = $request->input('name');
-        $tag->save();
-
-        return response()->json([
-            'status' => true,
-            'data' => [
-                'tag' => $tag
-            ],
-            'message' => 'Tag updated successfully'
-        ], 200);
+        return response()->json($response, $status);
     }
 
     public function destroy($id)
     {
-        $tag = HotelTag::find($id);
+        $response = $this->hotelService->deleteHotelTag($id);
 
-        if (!$tag) {
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'message' => 'Tag not found'
-            ], 404);
-        }
-
-        $tag->delete();
-
-        return response()->json([
-            'status' => false,
-            'data' => null,
-            'message' => 'Tag deleted successfully'
-        ], 200);
+        return response()->json($response, $response['status'] ? 200 : 404);
     }
 }

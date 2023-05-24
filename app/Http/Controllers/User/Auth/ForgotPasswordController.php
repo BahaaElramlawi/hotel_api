@@ -3,74 +3,30 @@
 namespace App\Http\Controllers\User\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Validation\Rules\Password as RulesPassword;
+use App\Http\Requests\User\Auth\ForgotPasswordRequest;
+use App\Http\Requests\User\Auth\ResetPasswordRequest;
+use App\Services\User\Auth\ForgotPasswordService;
 
 class ForgotPasswordController extends Controller
 {
-    public function forgotPassword(Request $request)
+    protected $userForgotPasswordService;
+
+    public function __construct(ForgotPasswordService $userForgotPasswordService)
     {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
-
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
-
-        if ($status == Password::RESET_LINK_SENT) {
-            return response([
-                'status' => true,
-                'data' => null,
-                'message' => __('A reset link has been sent to your email address.')
-            ], 200);
-        }
-
-        return response([
-            'status' => false,
-            'data' => null,
-            'message' => __('Unable to send reset link'),
-        ], 500);
+        $this->userForgotPasswordService = $userForgotPasswordService;
     }
 
-
-    public function reset(Request $request)
+    public function forgotPassword(ForgotPasswordRequest $request)
     {
-        $request->validate([
-            'token' => 'required',
-            'email' => 'required|email',
-            'password' => ['required', RulesPassword::defaults()],
-        ]);
+        $response = $this->userForgotPasswordService->sendResetLink($request->email);
 
-        $status = Password::reset(
-            $request->only('email', 'password', 'token'),
-            function ($user) use ($request) {
-                $user->forceFill([
-                    'password' => Hash::make($request->password),
-                ])->save();
-
-                $user->tokens()->delete();
-
-                event(new PasswordReset($user));
-            }
-        );
-
-        if ($status == Password::PASSWORD_RESET) {
-            return response([
-                'status' => true,
-                'data' => null,
-                'message' => 'Password reset successfully'
-            ]);
-        }
-
-        return response([
-            'status' => false,
-            'data' => null,
-            'message' => __($status)
-        ], 500);
-
+        return response()->json($response, $response['status'] ? 200 : 500);
     }
+
+    public function reset(ResetPasswordRequest $request)
+    {
+        $response = $this->userForgotPasswordService->resetPassword($request->email, $request->token, $request->password);
+        return response()->json($response, $response['status'] ? 200 : 500);
+    }
+
 }

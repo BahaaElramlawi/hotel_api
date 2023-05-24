@@ -3,75 +3,37 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Host;
+use App\Services\Admin\HostManagementService;
 use Illuminate\Http\Request;
 
 class HostManagementController extends Controller
 {
+    private $hostManagementService;
 
-    public function index(Request $request)
+    public function __construct(HostManagementService $hostManagementService)
     {
-        $perPage = $request->input('per_page', 10);
-        $hosts = Host::paginate($perPage);
-
-        if ($hosts->count() == 0) {
-            $response = [
-                'status' => false,
-                'data' => null,
-                'message' => 'No hosts found'
-            ];
-            return response($response, 404);
-        }
-
-        $response = [
-            'status' => true,
-            'data' => $hosts,
-            'message' => 'Hosts retrieved successfully'
-        ];
-        return response($response, 200);
+        $this->hostManagementService = $hostManagementService;
     }
 
+    public function index(Request $request, HostManagementService $hostManagementService)
+    {
+        $perPage = $request->input('per_page', 10);
+        $response = $hostManagementService->getHosts($perPage);
+
+        return response()->json($response, $response['status'] ? 200 : 404);
+    }
 
     public function show($id)
     {
-        $host = Host::find($id);
-
-        if (!$host) {
-            $response = [
-                'status' => false,
-                'data' => null,
-                'message' => 'Host not found'
-            ];
-            return response($response, 404);
-        }
-
-        $response = [
-            'status' => true,
-            'data' => $host,
-            'message' => 'Host retrieved successfully'
-        ];
-        return response($response, 200);
+        $response = $this->hostManagementService->findHostByID($id);
+        return response()->json($response, $response['status'] ? 200 : 404);
     }
 
     public function destroy($id)
     {
-        $host = Host::find($id);
+        $response = $this->hostManagementService->deleteHost($id);
 
-        if (!$host) {
-            $response = [
-                'status' => false,
-                'message' => 'Host not found'
-            ];
-            return response($response, 404);
-        }
-
-        $host->delete();
-
-        $response = [
-            'status' => true,
-            'message' => 'Host deleted successfully'
-        ];
-        return response($response, 200);
+        return response()->json($response, $response['status'] ? 200 : 404);
     }
 
 }

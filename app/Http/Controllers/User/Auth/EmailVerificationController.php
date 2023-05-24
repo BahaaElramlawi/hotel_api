@@ -2,77 +2,29 @@
 
 namespace App\Http\Controllers\User\Auth;
 
+
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
+use App\Services\User\Auth\EmailVerificationService;
 
 class EmailVerificationController extends Controller
 {
-    public function sendVerificationEmail(Request $request)
-    {
-        try {
-            $user = Auth::user();
-            if ($user->hasVerifiedEmail()) {
-                $response = [
-                    'status' => false,
-                    'data' => null,
-                    'message' => 'Email already verified'
-                ];
-                return response($response, 400);
-            } else {
-                // Set the sender information to the user's email address and name
-                Mail::alwaysFrom($user->email, $user->name);
 
-                $user->sendEmailVerificationNotification();
-                $response = [
-                    'status' => true,
-                    'data' => null,
-                    'message' => 'Verification email sent'
-                ];
-                return response($response, 200);
-            }
-        } catch (\Exception $e) {
-            $response = [
-                'status' => false,
-                'data' => null,
-                'message' => 'Failed to send verification email: ' . $e->getMessage()
-            ];
-            return response($response, 500);
-        }
+    protected $userEmailVerificationService;
+
+    public function __construct(EmailVerificationService $userEmailVerificationService)
+    {
+        $this->userEmailVerificationService = $userEmailVerificationService;
     }
 
-
-    public function verify(EmailVerificationRequest $request)
+    public function sendVerificationEmail()
     {
-        $user = Auth::user();
-        if ($user->hasVerifiedEmail()) {
-            return response([
-                'status' => false,
-                'data' => null,
-                'message' => 'Email already verified'
-            ], 400);
-        }
+        $response = $this->userEmailVerificationService->sendVerificationEmail();
+        return response()->json($response, $response['status'] ? 201 : 400);
+    }
 
-        if ($user->markEmailAsVerified()) {
-            // Set the sender information to the user's email address and name
-            Mail::alwaysFrom($user->email, $user->name);
-
-            event(new Verified($user));
-            return response([
-                'status' => true,
-                'data' => null,
-                'message' => 'Email has been verified'
-            ], 200);
-        }
-
-        return response([
-            'status' => false,
-            'data' => null,
-            'message' => 'Failed to verify email'
-        ], 500);
+    public function verify()
+    {
+        $response = $this->userEmailVerificationService->verifyEmail();
+        return response()->json($response, $response['status'] ? 201 : 400);
     }
 }
-

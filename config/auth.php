@@ -50,20 +50,6 @@ return [
         ],
     ],
 
-//    'guards' => [
-//        'admin' => [
-//            'driver' => 'session',
-//            'provider' => 'admins',
-//        ],
-//        'host' => [
-//            'driver' => 'session',
-//            'provider' => 'hosts',
-//        ],
-//        'user' => [
-//            'driver' => 'session',
-//            'provider' => 'users',
-//        ],
-//    ],
 
     /*
     |--------------------------------------------------------------------------

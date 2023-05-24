@@ -4,111 +4,35 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Hotel;
+use App\Services\Admin\HotelManagementService;
 use Illuminate\Http\Request;
 
 class HotelManagementController extends Controller
 {
-    public function index()
+    protected $hotelManagementService;
+
+    public function __construct(HotelManagementService $hotelManagementService)
     {
-        try {
-            $hotels = Hotel::with(['images', 'locations', 'tags', 'facilities'])
-                ->paginate(10);
-
-            $hotelData = [];
-            foreach ($hotels as $hotel) {
-                $images = $hotel->images()->pluck('image_url')->toArray();
-                $location = $hotel->location_id;
-                $tags = $hotel->tags()->pluck('name')->toArray();
-                $facilities = $hotel->facilities()->pluck('name')->toArray();
-
-                $hotelData[] = [
-                    'id' => $hotel->id,
-                    'host_id' => $hotel->host_id,
-                    'name' => $hotel->name,
-                    'price' => $hotel->price,
-                    'rate' => $hotel->rate,
-                    'description' => $hotel->description,
-                    'locations' => $location,
-                    'images' => $images,
-                    'tags' => $tags,
-                    'facilities' => $facilities,
-                ];
-            }
-
-            return response()->json([
-                'status' => true,
-                'data' => [
-                    'hotels' => $hotelData,
-                    'pagination' => [
-                        'current_page' => $hotels->currentPage(),
-                        'last_page' => $hotels->lastPage(),
-                        'per_page' => $hotels->perPage(),
-                        'total' => $hotels->total(),
-                    ],
-                ],
-                'message' => 'Hotels retrieved successfully'
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
+        $this->hotelManagementService = $hotelManagementService;
     }
 
-    public function show($id)
+    public function index(Request $request)
     {
-        try {
-            $hotel = Hotel::findOrFail($id);
-            $imagePaths = $hotel->images()->pluck('image_url')->toArray();
-            $hotelData = $hotel->toArray();
-            $hotelData['images'] = $imagePaths;
-            $hotelData['Location'] = $hotel->location_id; // assuming the `Hotel` model has a `location` relationship
-            $hotelData['tags'] = $hotel->tags()->pluck('name')->toArray(); // get the hotel's tags
-            $hotelData['facilities'] = $hotel->facilities()->pluck('name')->toArray(); // get the hotel's facilities
+        $perPage = $request->input('per_page', 10);
+        $response = $this->hotelManagementService->getAllHotels($perPage);
+        return response()->json($response, $response['status'] ? 200 : 500);
+    }
 
-            return response()->json([
-                'status' => true,
-                'data' => [
-                    'hotel' => $hotelData,
-                ],
-                'message' => 'Hotel retrieved successfully'
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
+    public function show(Request $request, $id)
+    {
+        $response = $this->hotelManagementService->getHotelByID($id);
+        return response()->json($response, $response['status'] ? 200 : 404);
     }
 
     public function destroy($id)
     {
-        try {
-            $hotel = Hotel::findOrFail($id);
-            $hotel->tags()->detach();
-            $hotel->facilities()->detach();
-            $hotel->images()->delete();
-            $hotel->delete();
+        $response = $this->hotelManagementService->deleteHotel($id);
 
-            return response()->json([
-                'status' => true,
-                'data' => null,
-                'message' => 'Hotel deleted successfully'
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
+        return response()->json($response, $response['status'] ? 200 : 500);
     }
-
-
 }
