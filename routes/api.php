@@ -17,8 +17,10 @@ use App\Http\Controllers\Host\HotelLocationController;
 use App\Http\Controllers\User\Auth\AuthController;
 use App\Http\Controllers\User\Auth\EmailVerificationController;
 use App\Http\Controllers\User\Auth\ForgotPasswordController;
+use App\Http\Controllers\User\Booking\BookingController;
 use App\Http\Controllers\User\Home\HomeController;
 use App\Http\Controllers\User\Profile\UserProfileController;
+use App\Http\Controllers\User\Review\HotelReviewController;
 use App\Http\Controllers\User\Search\SearchController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -123,25 +125,39 @@ Route::post('/user/upload-image', [AuthController::class, 'uploadImage']);
 Route::post('/user/login', [AuthController::class, 'login']);
 Route::post('/user/forgot-password', [ForgotPasswordController::class, 'forgotPassword']);
 Route::post('/user/reset-password', [ForgotPasswordController::class, 'reset']);
+Route::post('/user/verify-code', [ForgotPasswordController::class, 'verifyCode']);
 Route::post('/user/email/verification-notification', [EmailVerificationController::class, 'sendVerificationEmail'])->middleware('auth:sanctum');
 Route::get('/user/verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])->name('verification.verify')->middleware('auth:sanctum');
 
-//user home control
-Route::get('/user/get-hotel-tags', [HomeController::class, 'index']);
-Route::get('/user/hotels/tags/{tagID}', [HomeController::class, 'getHotelsByTagId']);
-Route::get('/user/hotel-detail/{id}', [HomeController::class, 'getHotelDetailByID']);
-Route::post('/user/hotel-detail/{id}', [HomeController::class, 'getHotelDetailByID']);
-
-//user profile control
-Route::get('/user/profile/{id}', [UserProfileController::class, 'index']);
-Route::post('/user/image', [UserProfileController::class, 'updateImage']);
-Route::post('/user/update-profile/{id}', [UserProfileController::class, 'update']);
-
-//user search control
-
-
 //protected users routes
 Route::group(['middleware' => ['auth:sanctum']], function () {
+
+    //user home control
+    Route::get('/user/get-hotel-tags', [HomeController::class, 'index']);
+    Route::get('/user/hotels/tags/{tagID}', [HomeController::class, 'getHotelsByTagId']);
+    Route::get('/user/hotel-detail/{id}', [HomeController::class, 'getHotelDetailByID']);
+    Route::post('/user/hotel-detail/{id}', [HomeController::class, 'getHotelDetailByID']);
+
+    //user review control
+    Route::post('/user/reviews', [HotelReviewController::class, 'createReview']);
+    Route::post('/user/reviews/{id}', [HotelReviewController::class, 'updateReview']);
+    Route::get('/user/hotels/{hotelId}/reviews', [HotelReviewController::class, 'getHotelReviews']);
+
+    //user profile control
+    Route::get('/user/profile/{id}', [UserProfileController::class, 'index']);
+    Route::post('/user/image', [UserProfileController::class, 'updateImage']);
+    Route::post('/user/update-profile/{id}', [UserProfileController::class, 'update']);
+
+    //user search control
+    Route::get('/hotels/search/{keyword}', [SearchController::class, 'searchHotels']);
+
+    //user booking control
+    Route::post('/user/booking', [BookingController::class, 'book']);
+    Route::get('/user/booking/ticket/{id}', [BookingController::class, 'getTicket']);
+    Route::get('hotels/ongoing', [BookingController::class, 'getHotelsByStatus'])->name('hotels.ongoing')->defaults('status', 'ongoing');
+    Route::get('hotels/completed', [BookingController::class, 'getHotelsByStatus'])->name('hotels.completed')->defaults('status', 'completed');
+    Route::get('hotels/cancelled', [BookingController::class, 'getHotelsByStatus'])->name('hotels.cancelled')->defaults('status', 'cancelled');
+
     //user logout
     Route::post('/user/logout', [AuthController::class, 'logout']);
 });

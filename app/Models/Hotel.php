@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 class Hotel extends Model
@@ -42,6 +41,17 @@ class Hotel extends Model
     public function facilities()
     {
         return $this->belongsToMany(HotelFacility::class, 'hotel_facility_pivot', 'hotel_id', 'hotel_facility_id')->withTimestamps();
+    }
+
+    // Define relationships, such as bookings or locations
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(HotelReview::class);
     }
 
 }

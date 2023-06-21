@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
+use App\Notifications\VerificationCodeNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use App\Notifications\ResetPasswordNotification;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Laravel\Sanctum\HasApiTokens;
@@ -29,15 +28,26 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'verification_code',
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
 
-    public function sendPasswordResetNotification($token)
+    public function hotelReviews()
     {
-        $url = 'http://127.0.0.1:8000/api/reset-password?token=' . $token;
-        $this->notify(new ResetPasswordNotification($url));
+        return $this->hasMany(HotelReview::class);
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+
+    public function sendVerificationCodeNotification($verificationCode)
+    {
+        $this->notify(new VerificationCodeNotification($verificationCode));
     }
 }
