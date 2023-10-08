@@ -1,6 +1,6 @@
 # Welcome to Hotel API 🏨
 
-*Your Gateway to Seamless Hotel Management*
+https://www.mu.my/files/uploads/mu-php-mysql-laravel-training.png
 
 ## Overview 🌟
 
