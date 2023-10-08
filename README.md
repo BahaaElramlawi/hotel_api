@@ -1,6 +1,7 @@
 # Welcome to Hotel API 🏨
 
-https://www.mu.my/files/uploads/mu-php-mysql-laravel-training.png
+
+![nodemongo](https://www.mu.my/files/uploads/mu-php-mysql-laravel-training.png)
 
 ## Overview 🌟
 
